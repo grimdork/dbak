@@ -4,11 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/Urethramancer/signor/opt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/grimdork/mysqldump"
 )
@@ -17,13 +15,13 @@ var o struct {
 	opt.DefaultHelp
 	Config string `short:"C" long:"config" help:"Configuration file for database and backup options." default:"/etc/dbak/config.json"`
 	Path   string `short:"p" long:"path" help:"Output directory for dump files." default:"/tmp"`
-	Base   string `short:"b" long:"base" help:"Base file name for the output file." default:"dump"`
+	Base   string `short:"b" long:"base" help:"Base name for dump files." default:"dump"`
 	Full   bool   `short:"F" long:"full" help:"Perform full backup even if no changes."`
 }
 
 func main() {
 	a := opt.Parse(&o)
-	if o.Help {
+	if o.Help || o.Path == "" || o.Base == "" || o.Config == "" {
 		a.Usage()
 		return
 	}
@@ -47,30 +45,16 @@ func main() {
 		res, err = dumper.Dump(cfg.Tables...)
 	}
 	fail(err)
+	defer os.Remove(res)
 
-	fmt.Printf("Dumped to %s\n", res)
-	awscfg := &aws.Config{
-		Region: aws.String(cfg.Region),
-	}
-	// Use shared credentials in ~/.aws/credentials or from envvars.
-	// Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
-	sess, err := session.NewSession(awscfg)
+	pr("Dumped to %s", res)
+
+	b, err := NewBucket(cfg.Region, cfg.Bucket)
 	fail(err)
 
-	_, err = sess.Config.Credentials.Get()
+	fn := filepath.Join(res)
+	err = b.Upload(fn)
 	fail(err)
-
-	b := NewBucket(s3.New(sess), cfg.Bucket)
-	list, err := b.List()
-	fail(err)
-
-	for _, item := range list {
-		fmt.Println("Name:         ", *item.Key)
-		fmt.Println("Last modified:", *item.LastModified)
-		fmt.Println("Size:         ", *item.Size)
-		fmt.Println("Storage class:", *item.StorageClass)
-		fmt.Println("")
-	}
 }
 
 func pr(format string, v ...interface{}) {
