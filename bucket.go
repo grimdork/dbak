@@ -1,8 +1,12 @@
 package main
 
 import (
+	"compress/gzip"
+	"io"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -42,7 +46,8 @@ func NewBucket(region, name string) (*Bucket, error) {
 		Name: name,
 	}
 
-	return b, nil
+	_, err = b.List()
+	return b, err
 }
 
 // List contents of bucket.
@@ -64,25 +69,44 @@ func (b *Bucket) Upload(fn string) error {
 	}
 
 	defer f.Close()
+
+	piper, pipew := io.Pipe()
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	name := filepath.Join("db", filepath.Base(fn)+".sql.gz")
+	pr("Uploading to s3://%s/%s", b.Name, name)
+	go func() {
+		uploader := s3manager.NewUploader(b.sess)
+		_, err = uploader.Upload(&s3manager.UploadInput{
+			Bucket: aws.String(b.Name),
+			Key:    aws.String(name),
+			Body:   piper,
+		})
+		if err != nil {
+			pr("Error uploading: %s", err.Error())
+			time.Sleep(time.Millisecond * 500)
+		}
+		wg.Done()
+	}()
+
 	fi, err := f.Stat()
 	if err != nil {
 		return err
 	}
-
 	bar := pb.Full.Start64(fi.Size())
-	defer bar.Finish()
-	r := bar.NewProxyReader(f)
-	name := filepath.Join("db", filepath.Base(fn))
-	pr("Uploading to %s", name)
-	uploader := s3manager.NewUploader(b.sess)
-	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(b.Name),
-		Key:    aws.String(name),
-		Body:   r,
-	})
+	reader := bar.NewProxyReader(f)
+
+	gzw, _ := gzip.NewWriterLevel(pipew, gzip.BestCompression)
+	_, err = io.Copy(gzw, reader)
 	if err != nil {
+		gzw.Close()
 		return err
 	}
 
+	gzw.Close()
+	pipew.Close()
+	defer piper.Close()
+	wg.Wait()
+	bar.Finish()
 	return nil
 }
