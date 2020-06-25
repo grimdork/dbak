@@ -44,6 +44,15 @@ func main() {
 	if o.Full || len(cfg.Tables) == 0 {
 		res, err = dumper.Dump()
 	} else {
+		// In selective table mode we're also looking for the last updated date.
+		for _, t := range cfg.Tables {
+			date, err := getLastUpdate(db, cfg.Name, t)
+			if err != nil {
+				pr("Error reading last update: %s", err.Error())
+			} else {
+				pr("%s was updated %s", t, date)
+			}
+		}
 		res, err = dumper.Dump(cfg.Tables...)
 	}
 	fail(err)
@@ -70,4 +79,10 @@ func fail(err error) {
 
 	fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 	os.Exit(2)
+}
+
+func getLastUpdate(db *sql.DB, dbname, table string) (string, error) {
+	var date string
+	err := db.QueryRow("SELECT UPDATE_TIME FROM information_schema.tables WHERE TABLE_SCHEMA = '" + dbname + "' AND TABLE_NAME ='" + table + "'").Scan(&date)
+	return date, err
 }
