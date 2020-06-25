@@ -34,6 +34,8 @@ func main() {
 	))
 	fail(err)
 
+	db.SetMaxIdleConns(100)
+	db.SetMaxOpenConns(100)
 	dumper, err := mysqldump.Register(db, o.Path, o.Base+"-20060102T150405")
 	fail(err)
 
