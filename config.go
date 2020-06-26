@@ -73,8 +73,18 @@ func (b *Bucket) UpdateTableDates(td *TableDates) error {
 	f := newMemFile(tabledates, false)
 	f.WriteAt(data, 0)
 	f.Seek(0, io.SeekStart)
-	buf := make([]byte, 10000)
-	f.Read(buf)
-	pr("%d\n%s\n", len(buf), buf)
-	return b.UploadJSON(tabledates, f)
+
+	r, w := io.Pipe()
+	go func() {
+		io.Copy(w, f)
+		w.Close()
+	}()
+	uploader := s3manager.NewUploader(b.sess)
+	_, err = uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(b.Name),
+		Key:    aws.String(tabledates),
+		Body:   r,
+	})
+	r.Close()
+	return err
 }

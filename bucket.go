@@ -80,7 +80,6 @@ func (b *Bucket) UploadGzip(path, fn string) error {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	name := filepath.Join(path, filepath.Base(fn)+".gz")
-	pr("Uploading to s3://%s/%s", b.Name, name)
 	go func() {
 		uploader := s3manager.NewUploader(b.sess)
 		_, err = uploader.Upload(&s3manager.UploadInput{
@@ -99,6 +98,7 @@ func (b *Bucket) UploadGzip(path, fn string) error {
 	if err != nil {
 		return err
 	}
+
 	bar := pb.Full.Start64(fi.Size())
 	reader := bar.NewProxyReader(f)
 
@@ -114,27 +114,5 @@ func (b *Bucket) UploadGzip(path, fn string) error {
 	defer piper.Close()
 	wg.Wait()
 	bar.Finish()
-	return nil
-}
-
-func (b *Bucket) UploadJSON(fn string, r io.Reader) error {
-	f, err := os.OpenFile("test", os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-
-	n, err := io.Copy(f, r)
-	pr("%d, %v", n, err)
-	defer f.Close()
-	uploader := s3manager.NewUploader(b.sess)
-	out, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(b.Name),
-		Key:    aws.String(fn),
-		Body:   f,
-	})
-	if err != nil {
-		return err
-	}
-	pr("%s", out.Location)
 	return nil
 }

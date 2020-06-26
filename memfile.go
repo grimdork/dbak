@@ -60,14 +60,6 @@ func (f *memFile) Sys() interface{} {
 	}
 }
 
-// ReaderAt implementaton.
-func (f *memFile) ReaderAt() (io.ReaderAt, error) {
-	if f.isdir {
-		return nil, os.ErrInvalid
-	}
-	return bytes.NewReader(f.content), nil
-}
-
 // WriterAt implementation.
 func (f *memFile) WriterAt() (io.WriterAt, error) {
 	if f.isdir {
@@ -96,6 +88,14 @@ func (f *memFile) WriteAt(p []byte, off int64) (int, error) {
 
 	f.modtime = time.Now()
 	return c, err
+}
+
+// ReaderAt implementaton.
+func (f *memFile) ReaderAt() (io.ReaderAt, error) {
+	if f.isdir {
+		return nil, os.ErrInvalid
+	}
+	return bytes.NewReader(f.content), nil
 }
 
 // Read copies from the beginning of the internal buffer to a supplied buffer.
