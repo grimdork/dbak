@@ -100,9 +100,7 @@ func (f *memFile) WriteAt(p []byte, off int64) (int, error) {
 
 // Read copies from the beginning of the internal buffer to a supplied buffer.
 func (f *memFile) Read(p []byte) (int, error) {
-	pr("Read(): %d byte buffer", len(p))
 	c, err := f.ReadAt(p, f.pos)
-	pr("Read(): %d,%v", c, err)
 	return c, err
 }
 
@@ -110,19 +108,42 @@ func (f *memFile) Read(p []byte) (int, error) {
 func (f *memFile) ReadAt(p []byte, off int64) (int, error) {
 	f.Lock()
 	defer f.Unlock()
-	if f.pos > int64(len(f.content)) {
-		f.pos = int64(len(f.content))
-	}
-	if f.pos == int64(len(f.content)) {
+
+	if f.pos >= f.Size() {
 		return 0, io.EOF
 	}
 
-	pr("Copy %d bytes at offset %d to %p", len(f.content[off:]), off, p)
 	c := copy(p, f.content[off:])
+	f.pos += int64(c)
 	return c, nil
 }
 
-// Reset position.
-func (f *memFile) Reset() {
-	f.pos = 0
+// Seek to a position in the file.
+func (f *memFile) Seek(off int64, whence int) (int64, error) {
+	switch whence {
+	case io.SeekCurrent:
+		pos := f.pos + off
+		if pos > f.Size() {
+			return 0, io.ErrUnexpectedEOF
+		}
+
+		f.pos = pos
+		return f.pos, nil
+
+	case io.SeekStart:
+		if off > f.Size() {
+			return 0, io.ErrUnexpectedEOF
+		}
+
+		f.pos = off
+		return f.pos, nil
+
+	case io.SeekEnd:
+		pos := f.Size() + off
+		if pos > f.Size() {
+			return 0, io.ErrUnexpectedEOF
+		}
+	}
+
+	return 0, os.ErrInvalid
 }

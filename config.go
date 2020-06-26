@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -71,7 +72,7 @@ func (b *Bucket) UpdateTableDates(td *TableDates) error {
 
 	f := newMemFile(tabledates, false)
 	f.WriteAt(data, 0)
-	f.Reset()
+	f.Seek(0, io.SeekStart)
 	buf := make([]byte, 10000)
 	f.Read(buf)
 	pr("%d\n%s\n", len(buf), buf)
