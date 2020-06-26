@@ -3,6 +3,10 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 // Config for database backups.
@@ -34,4 +38,42 @@ func loadConfig(fn string) (*Config, error) {
 	cfg := &Config{}
 	err = json.Unmarshal(data, cfg)
 	return cfg, err
+}
+
+// TbleDates holds the most recent update times for all tables.
+type TableDates struct {
+	Dates map[string]string `json:"dates"`
+}
+
+const tabledates = "tables.json"
+
+// LoadTableDates returns a map of table names with last modified dates.
+func (b *Bucket) LoadTableDates() *TableDates {
+	td := &TableDates{Dates: make(map[string]string)}
+	buf := newMemFile(tabledates, false)
+	dl := s3manager.NewDownloader(b.sess)
+	_, _ = dl.Download(buf,
+		&s3.GetObjectInput{
+			Bucket: aws.String(b.Name),
+			Key:    aws.String(tabledates),
+		})
+
+	// Simply return an empty structure no matter what happened during download.
+	json.Unmarshal(buf.content, &td)
+	return td
+}
+
+func (b *Bucket) UpdateTableDates(td *TableDates) error {
+	data, err := json.MarshalIndent(td, "", "\t")
+	if err != nil {
+		return err
+	}
+
+	f := newMemFile(tabledates, false)
+	f.WriteAt(data, 0)
+	f.Reset()
+	buf := make([]byte, 10000)
+	f.Read(buf)
+	pr("%d\n%s\n", len(buf), buf)
+	return b.UploadJSON(tabledates, f)
 }

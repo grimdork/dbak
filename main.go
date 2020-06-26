@@ -36,33 +36,45 @@ func main() {
 
 	db.SetMaxIdleConns(100)
 	db.SetMaxOpenConns(100)
-	dumper, err := mysqldump.Register(db, o.Path, o.Base+"-20060102T150405")
+	dumper, err := mysqldump.Register(db, o.Path, o.Base+"-20060102T150405"+".sql")
 	fail(err)
 
 	defer dumper.Close()
+	b, err := NewBucket(cfg.Region, cfg.Bucket)
+	fail(err)
+
+	dates := b.LoadTableDates()
 	var res string
 	if o.Full || len(cfg.Tables) == 0 {
 		res, err = dumper.Dump()
 	} else {
 		// In selective table mode we're also looking for the last updated date.
+		// NOTE: This doesn't work with all database storage types.
+		list := []string{}
 		for _, t := range cfg.Tables {
 			date, err := getLastUpdate(db, cfg.Name, t)
 			if err != nil {
-				pr("Error reading last update: %s", err.Error())
+				// No date exists, just include the table.
+				list = append(list, t)
 			} else {
-				pr("%s was updated %s", t, date)
+				d, ok := dates.Dates[t]
+				if !ok || d == date {
+					// No previous date, or last modified date is different.
+					list = append(list, t)
+				}
 			}
+			// Update the map with the latest date found.
+			dates.Dates[t] = date
 		}
-		res, err = dumper.Dump(cfg.Tables...)
+		res, err = dumper.Dump(list...)
 	}
 	fail(err)
-	defer os.Remove(res)
 
-	pr("Dumped to %s", res)
-
-	b, err := NewBucket(cfg.Region, cfg.Bucket)
+	err = b.UpdateTableDates(dates)
 	fail(err)
 
+	defer os.Remove(res)
+	pr("Dumped to %s", res)
 	fn := filepath.Join(res)
 	err = b.Upload(fn)
 	fail(err)
