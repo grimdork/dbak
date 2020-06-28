@@ -10,9 +10,9 @@ import (
 	"time"
 )
 
-// Implements os.FileInfo, Reader and Writer interfaces.
-// These are the 3 interfaces necessary for the Handlers.
-type memFile struct {
+// MemFile implements os.FileInfo, Reader. Writer and Seeker interfaces.
+// This should be enough for a basic virtual file.
+type MemFile struct {
 	sync.RWMutex
 	name    string
 	modtime time.Time
@@ -23,18 +23,18 @@ type memFile struct {
 }
 
 // NewMemFile creates a new virtual file.
-func NewMemFile(name string, isdir bool) *memFile {
-	return &memFile{
+func NewMemFile(name string, isdir bool) *MemFile {
+	return &MemFile{
 		name:    name,
 		modtime: time.Now(),
 		isdir:   isdir,
 	}
 }
 
-// Have memFile fulfill os.FileInfo interface
-func (f *memFile) Name() string { return filepath.Base(f.name) }
-func (f *memFile) Size() int64  { return int64(len(f.buf)) }
-func (f *memFile) Mode() os.FileMode {
+// Have MemFile fulfill os.FileInfo interface
+func (f *MemFile) Name() string { return filepath.Base(f.name) }
+func (f *MemFile) Size() int64  { return int64(len(f.buf)) }
+func (f *MemFile) Mode() os.FileMode {
 	ret := os.FileMode(0644)
 	if f.isdir {
 		ret = os.FileMode(0755) | os.ModeDir
@@ -46,13 +46,13 @@ func (f *memFile) Mode() os.FileMode {
 }
 
 // ModTime retuns the timestamp of the last modification.
-func (f *memFile) ModTime() time.Time { return f.modtime }
+func (f *MemFile) ModTime() time.Time { return f.modtime }
 
 // IsDir returns true if this is a directory.
-func (f *memFile) IsDir() bool { return f.isdir }
+func (f *MemFile) IsDir() bool { return f.isdir }
 
 // Sys returns size and ownership info.
-func (f *memFile) Sys() interface{} {
+func (f *MemFile) Sys() interface{} {
 	return &syscall.Stat_t{
 		Uid:  65534,
 		Gid:  65534,
@@ -61,7 +61,7 @@ func (f *memFile) Sys() interface{} {
 }
 
 // WriterAt implementation.
-func (f *memFile) WriterAt() (io.WriterAt, error) {
+func (f *MemFile) WriterAt() (io.WriterAt, error) {
 	if f.isdir {
 		return nil, os.ErrInvalid
 	}
@@ -70,12 +70,12 @@ func (f *memFile) WriterAt() (io.WriterAt, error) {
 }
 
 // Write conforms to the io.Writer interface.
-func (f *memFile) Write(p []byte) (int, error) {
+func (f *MemFile) Write(p []byte) (int, error) {
 	return f.WriteAt(p, f.pos)
 }
 
 // WriteAt implements the actual filling of the memory buffer.
-func (f *memFile) WriteAt(p []byte, off int64) (int, error) {
+func (f *MemFile) WriteAt(p []byte, off int64) (int, error) {
 	f.Lock()
 	defer f.Unlock()
 	plen := len(p) + int(off)
@@ -96,7 +96,7 @@ func (f *memFile) WriteAt(p []byte, off int64) (int, error) {
 }
 
 // ReaderAt implementaton.
-func (f *memFile) ReaderAt() (io.ReaderAt, error) {
+func (f *MemFile) ReaderAt() (io.ReaderAt, error) {
 	if f.isdir {
 		return nil, os.ErrInvalid
 	}
@@ -104,13 +104,13 @@ func (f *memFile) ReaderAt() (io.ReaderAt, error) {
 }
 
 // Read copies from the beginning of the internal buffer to a supplied buffer.
-func (f *memFile) Read(p []byte) (int, error) {
+func (f *MemFile) Read(p []byte) (int, error) {
 	c, err := f.ReadAt(p, f.pos)
 	return c, err
 }
 
 // ReadAt copies out from the file buffer at an offset to a supplied buffer.
-func (f *memFile) ReadAt(p []byte, off int64) (int, error) {
+func (f *MemFile) ReadAt(p []byte, off int64) (int, error) {
 	f.Lock()
 	defer f.Unlock()
 
@@ -124,7 +124,7 @@ func (f *memFile) ReadAt(p []byte, off int64) (int, error) {
 }
 
 // Seek to a position in the file.
-func (f *memFile) Seek(off int64, whence int) (int64, error) {
+func (f *MemFile) Seek(off int64, whence int) (int64, error) {
 	switch whence {
 	case io.SeekCurrent:
 		pos := f.pos + off
@@ -154,6 +154,6 @@ func (f *memFile) Seek(off int64, whence int) (int64, error) {
 }
 
 // WriteString conforms with io.StringWriter.
-func (f *memFile) WriteString(s string) (n int, err error) {
+func (f *MemFile) WriteString(s string) (n int, err error) {
 	return f.Write([]byte(s))
 }
