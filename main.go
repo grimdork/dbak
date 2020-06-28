@@ -45,7 +45,7 @@ func main() {
 
 	db.SetMaxIdleConns(100)
 	db.SetMaxOpenConns(100)
-	dumper, err := mysqldump.Register(db, o.Path, o.Base+"-20060102T150405"+".sql")
+	dumper, err := mysqldump.Register(db, o.Path, o.Base+"-20060102T150405")
 	fail(err)
 
 	defer dumper.Close()
@@ -55,7 +55,7 @@ func main() {
 	dates := b.LoadTableDates()
 	var res string
 	if o.Full || len(cfg.Tables) == 0 {
-		res, err = dumper.Dump()
+		err = dumper.Dump()
 	} else {
 		// In selective table mode we're also looking for the last updated date.
 		// NOTE: This doesn't work with all database storage types.
@@ -75,7 +75,7 @@ func main() {
 			// Update the map with the latest date found.
 			dates.Dates[t] = date
 		}
-		res, err = dumper.Dump(list...)
+		err = dumper.Dump(list...)
 	}
 	fail(err)
 
@@ -83,7 +83,7 @@ func main() {
 	fail(err)
 
 	defer os.Remove(res)
-	pr("Dumped to %s", res)
+	pr("Dumped to %s", dumper.Path())
 	fn := filepath.Join(res)
 	err = b.Upload(fn)
 	fail(err)
