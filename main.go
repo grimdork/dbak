@@ -9,6 +9,7 @@ import (
 	"github.com/Urethramancer/signor/opt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/grimdork/mysqldump"
+	_ "github.com/lib/pq"
 )
 
 var o struct {
@@ -29,9 +30,17 @@ func main() {
 	cfg, err := loadConfig(o.Config)
 	fail(err)
 
-	db, err := sql.Open("mysql", fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s", cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Name,
-	))
+	t := cfg.Type
+	if t != "mysql" && t != "postgres" {
+		t = "mysql"
+	}
+	sslmode := "disable"
+	conn := fmt.Sprintf(
+		"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
+		cfg.Host, cfg.Port, cfg.Name, cfg.Username, cfg.Password, sslmode,
+	)
+	pr("%s", conn)
+	db, err := sql.Open(t, conn)
 	fail(err)
 
 	db.SetMaxIdleConns(100)

@@ -9,7 +9,7 @@ import (
 )
 
 func TestMemFile(t *testing.T) {
-	f := newMemFile("moo", false)
+	f := NewMemFile("moo", false)
 	buf := bytes.NewBufferString("Empty file.")
 	f.WriteAt(buf.Bytes(), 0)
 	f.Seek(0, io.SeekStart)

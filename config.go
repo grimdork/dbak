@@ -22,6 +22,8 @@ type Config struct {
 	Port string `json:"port"`
 	// Name of database to back up from.
 	Name string `json:"name"`
+	// Type of database is either "mysql" or "postgres".
+	Type string `json:"type"`
 	// Tables to back up.
 	Tables []string `json:"tables"`
 	// Region for S3 bucket.
@@ -51,16 +53,16 @@ const tabledates = "tables.json"
 // LoadTableDates returns a map of table names with last modified dates.
 func (b *Bucket) LoadTableDates() *TableDates {
 	td := &TableDates{Dates: make(map[string]string)}
-	buf := newMemFile(tabledates, false)
+	f := NewMemFile(tabledates, false)
 	dl := s3manager.NewDownloader(b.sess)
-	_, _ = dl.Download(buf,
+	_, _ = dl.Download(f,
 		&s3.GetObjectInput{
 			Bucket: aws.String(b.Name),
 			Key:    aws.String(tabledates),
 		})
 
 	// Simply return an empty structure no matter what happened during download.
-	json.Unmarshal(buf.content, &td)
+	json.Unmarshal(f.buf, &td)
 	return td
 }
 
@@ -70,7 +72,7 @@ func (b *Bucket) UpdateTableDates(td *TableDates) error {
 		return err
 	}
 
-	f := newMemFile(tabledates, false)
+	f := NewMemFile(tabledates, false)
 	f.WriteAt(data, 0)
 	f.Seek(0, io.SeekStart)
 

@@ -17,13 +17,13 @@ type memFile struct {
 	name    string
 	modtime time.Time
 	symlink string
-	content []byte
+	buf     []byte
 	pos     int64
 	isdir   bool
 }
 
-// factory to make sure modtime is set
-func newMemFile(name string, isdir bool) *memFile {
+// NewMemFile creates a new virtual file.
+func NewMemFile(name string, isdir bool) *memFile {
 	return &memFile{
 		name:    name,
 		modtime: time.Now(),
@@ -33,7 +33,7 @@ func newMemFile(name string, isdir bool) *memFile {
 
 // Have memFile fulfill os.FileInfo interface
 func (f *memFile) Name() string { return filepath.Base(f.name) }
-func (f *memFile) Size() int64  { return int64(len(f.content)) }
+func (f *memFile) Size() int64  { return int64(len(f.buf)) }
 func (f *memFile) Mode() os.FileMode {
 	ret := os.FileMode(0644)
 	if f.isdir {
@@ -56,7 +56,7 @@ func (f *memFile) Sys() interface{} {
 	return &syscall.Stat_t{
 		Uid:  65534,
 		Gid:  65534,
-		Size: int64(len(f.content)),
+		Size: int64(len(f.buf)),
 	}
 }
 
@@ -69,20 +69,25 @@ func (f *memFile) WriterAt() (io.WriterAt, error) {
 	return f, nil
 }
 
+// Write conforms to the io.Writer interface.
+func (f *memFile) Write(p []byte) (int, error) {
+	return f.WriteAt(p, f.pos)
+}
+
 // WriteAt implements the actual filling of the memory buffer.
 func (f *memFile) WriteAt(p []byte, off int64) (int, error) {
 	f.Lock()
 	defer f.Unlock()
 	plen := len(p) + int(off)
-	if plen >= len(f.content) {
+	if plen >= len(f.buf) {
 		nc := make([]byte, plen)
-		copy(nc, f.content)
-		f.content = nc
+		copy(nc, f.buf)
+		f.buf = nc
 	}
-	c := copy(f.content[off:], p)
+	c := copy(f.buf[off:], p)
 	var err error
 	f.pos += int64(c)
-	if f.pos >= int64(len(f.content)) {
+	if f.pos >= int64(len(f.buf)) {
 		err = io.EOF
 	}
 
@@ -95,7 +100,7 @@ func (f *memFile) ReaderAt() (io.ReaderAt, error) {
 	if f.isdir {
 		return nil, os.ErrInvalid
 	}
-	return bytes.NewReader(f.content), nil
+	return bytes.NewReader(f.buf), nil
 }
 
 // Read copies from the beginning of the internal buffer to a supplied buffer.
@@ -113,7 +118,7 @@ func (f *memFile) ReadAt(p []byte, off int64) (int, error) {
 		return 0, io.EOF
 	}
 
-	c := copy(p, f.content[off:])
+	c := copy(p, f.buf[off:])
 	f.pos += int64(c)
 	return c, nil
 }
@@ -146,4 +151,9 @@ func (f *memFile) Seek(off int64, whence int) (int64, error) {
 	}
 
 	return 0, os.ErrInvalid
+}
+
+// WriteString conforms with io.StringWriter.
+func (f *memFile) WriteString(s string) (n int, err error) {
+	return f.Write([]byte(s))
 }
