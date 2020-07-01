@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/Urethramancer/signor/opt"
 	_ "github.com/go-sql-driver/mysql"
@@ -14,10 +13,11 @@ import (
 
 var o struct {
 	opt.DefaultHelp
-	Config string `short:"C" long:"config" help:"Configuration file for database and backup options." default:"/etc/dbak/config.json"`
-	Path   string `short:"p" long:"path" help:"Output directory for dump files." default:"/tmp"`
-	Base   string `short:"b" long:"base" help:"Base name for dump files." default:"dump"`
+	Config string `short:"C" long:"config" help:"Configuration file for database and backup options." default:"/etc/dbak/config.json" placeholder:"FILE"`
+	Path   string `short:"p" long:"path" help:"Output directory for dump files." default:"/tmp" placeholder:"PATH"`
+	Base   string `short:"b" long:"base" help:"Base name for dump files." default:"dump" placeholder:"NAME"`
 	Full   bool   `short:"F" long:"full" help:"Perform full backup even if no changes."`
+	Prune  int    `short:"P" long:"prune" help:"Remove files older than the specified number of days." placeholder:"DAYS"`
 }
 
 func main() {
@@ -35,17 +35,24 @@ func main() {
 		t = "mysql"
 	}
 	sslmode := "disable"
-	conn := fmt.Sprintf(
-		"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
-		cfg.Host, cfg.Port, cfg.Name, cfg.Username, cfg.Password, sslmode,
-	)
-	pr("%s", conn)
+	var conn string
+	if cfg.Type == "postgres" {
+		conn = fmt.Sprintf(
+			"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
+			cfg.Host, cfg.Port, cfg.Name, cfg.Username, cfg.Password, sslmode,
+		)
+	} else {
+		conn = fmt.Sprintf(
+			"%s:%s@tcp(%s:%s)/%s",
+			cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Name,
+		)
+	}
 	db, err := sql.Open(t, conn)
 	fail(err)
 
 	db.SetMaxIdleConns(100)
 	db.SetMaxOpenConns(100)
-	dumper, err := sqldump.NewDumper(db, o.Path, o.Base+"-20060102T150405")
+	dumper, err := sqldump.NewDumper(db, o.Path, o.Base+"-20060102T150405.sql")
 	fail(err)
 
 	defer dumper.Close()
@@ -53,7 +60,6 @@ func main() {
 	fail(err)
 
 	dates := b.LoadTableDates()
-	var res string
 	if o.Full || len(cfg.Tables) == 0 {
 		err = dumper.Dump()
 	} else {
@@ -82,11 +88,16 @@ func main() {
 	err = b.UpdateTableDates(dates)
 	fail(err)
 
-	defer os.Remove(res)
+	defer os.Remove(dumper.Path())
 	pr("Dumped to %s", dumper.Path())
-	fn := filepath.Join(res)
-	err = b.Upload(fn)
+	err = b.Upload(dumper.Path())
 	fail(err)
+
+	if o.Prune > 0 {
+		c, err := b.Prune(o.Base, o.Prune)
+		fail(err)
+		pr("Pruned %d files.", c)
+	}
 }
 
 func pr(format string, v ...interface{}) {

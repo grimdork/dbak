@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/gzip"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -115,4 +116,43 @@ func (b *Bucket) UploadGzip(path, fn string) error {
 	wg.Wait()
 	bar.Finish()
 	return nil
+}
+
+// Prune files older than a certain number of days.
+func (b *Bucket) Prune(base string, days int) (int, error) {
+	count := 0
+	list, err := b.List()
+	if err != nil {
+		return 0, err
+	}
+
+	backups := []string{}
+	for _, o := range list {
+		s := *o.Key
+		if s[0:3+len(base)] == "db/"+base {
+			backups = append(backups, *o.Key)
+		}
+	}
+	oldest := time.Now().AddDate(0, 0, -days).Format(base + "-20060102T150405.sql.gz")
+	pr("Removing older than %s", oldest)
+	for _, s := range backups {
+		if filepath.Base(s) < oldest {
+			pr("\tDeleting %s", filepath.Base(s))
+			_, err = b.srv.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(b.Name), Key: aws.String(s)})
+			if err != nil {
+				return count, errors.New("Unable to delete " + s + ": " + err.Error())
+			}
+
+			err = b.srv.WaitUntilObjectNotExists(&s3.HeadObjectInput{
+				Bucket: aws.String(b.Name),
+				Key:    aws.String(s),
+			})
+			if err != nil {
+				return count, errors.New(s + " did not get deleted: " + err.Error())
+			}
+
+			count++
+		}
+	}
+	return count, nil
 }
