@@ -8,7 +8,7 @@ import (
 
 	"github.com/Urethramancer/signor/opt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/grimdork/mysqldump"
+	"github.com/grimdork/sqldump"
 	_ "github.com/lib/pq"
 )
 
@@ -45,7 +45,7 @@ func main() {
 
 	db.SetMaxIdleConns(100)
 	db.SetMaxOpenConns(100)
-	dumper, err := mysqldump.Register(db, o.Path, o.Base+"-20060102T150405")
+	dumper, err := sqldump.NewDumper(db, o.Path, o.Base+"-20060102T150405")
 	fail(err)
 
 	defer dumper.Close()
