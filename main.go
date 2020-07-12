@@ -13,11 +13,12 @@ import (
 
 var o struct {
 	opt.DefaultHelp
-	Config string `short:"C" long:"config" help:"Configuration file for database and backup options." default:"/etc/dbak/config.json" placeholder:"FILE"`
-	Path   string `short:"p" long:"path" help:"Output directory for dump files." default:"/tmp" placeholder:"PATH"`
-	Base   string `short:"b" long:"base" help:"Base name for dump files." default:"dump" placeholder:"NAME"`
-	Full   bool   `short:"F" long:"full" help:"Perform full backup even if no changes."`
-	Prune  int    `short:"P" long:"prune" help:"Remove files older than the specified number of days." placeholder:"DAYS"`
+	Config  string `short:"C" long:"config" help:"Configuration file for database and backup options." default:"/etc/dbak/config.json" placeholder:"FILE"`
+	Path    string `short:"p" long:"path" help:"Output directory for dump files." default:"/tmp" placeholder:"PATH"`
+	Base    string `short:"b" long:"base" help:"Base name for dump files." default:"dump" placeholder:"NAME"`
+	Full    bool   `short:"F" long:"full" help:"Perform full backup even if no changes."`
+	Prune   int    `short:"P" long:"prune" help:"Remove files older than the specified number of days." placeholder:"DAYS"`
+	MaxRows int64  `short:"m" long:"maxrows" help:"Number of rows to fetch at a time, to avoid memory running out on large databases." placeholder:"N" default:"1000"`
 }
 
 func main() {
@@ -56,6 +57,7 @@ func main() {
 	fail(err)
 
 	defer dumper.Close()
+	dumper.SetMaxRows(o.MaxRows)
 	b, err := NewBucket(cfg.Region, cfg.Bucket)
 	fail(err)
 
