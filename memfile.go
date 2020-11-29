@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"sync"
@@ -78,6 +79,10 @@ func (f *MemFile) Write(p []byte) (int, error) {
 func (f *MemFile) WriteAt(p []byte, off int64) (int, error) {
 	f.Lock()
 	defer f.Unlock()
+	if len(p)+int(off) > math.MaxInt32 {
+		return 0, io.ErrUnexpectedEOF
+	}
+
 	plen := len(p) + int(off)
 	if plen >= len(f.buf) {
 		nc := make([]byte, plen)
