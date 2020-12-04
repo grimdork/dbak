@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/Urethramancer/signor v0.10.2
-	github.com/aws/aws-sdk-go v1.35.36
+	github.com/aws/aws-sdk-go v1.36.1
 	github.com/cheggaaa/pb/v3 v3.0.5
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/grimdork/sqldump v0.6.3
