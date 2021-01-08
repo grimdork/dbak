@@ -4,8 +4,8 @@ github.com/Urethramancer/signor v0.10.2 h1:Re02wGIJMtrpAUS9t9TvMkjx++ST2LtNHBI7+
 github.com/Urethramancer/signor v0.10.2/go.mod h1:DORKrGOeJ735IqsyRFgGKpE5miMDmMhkK/iQAoaVF4g=
 github.com/VividCortex/ewma v1.1.1 h1:MnEK4VOv6n0RSY4vtRe3h11qjxL3+t0B8yOL8iMXdcM=
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
-github.com/aws/aws-sdk-go v1.36.21 h1:7CcrvoPUYex6CVeEK7/UZlYx5/AcVCWrl1FsX7fVvFw=
-github.com/aws/aws-sdk-go v1.36.21/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
+github.com/aws/aws-sdk-go v1.36.23 h1:umM44ptMKImsUWLtjGBv/4Ut7Nd99DfqoZDkO0j0/Kc=
+github.com/aws/aws-sdk-go v1.36.23/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/cheggaaa/pb/v3 v3.0.5 h1:lmZOti7CraK9RSjzExsY53+WWfub9Qv13B5m4ptEoPE=
 github.com/cheggaaa/pb/v3 v3.0.5/go.mod h1:X1L61/+36nz9bjIsrDU52qHKOQukUQe2Ge+YvGuquCw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
