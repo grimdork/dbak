@@ -1,7 +1,9 @@
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
-github.com/Urethramancer/signor v0.10.2 h1:Re02wGIJMtrpAUS9t9TvMkjx++ST2LtNHBI7+0w6Xvs=
-github.com/Urethramancer/signor v0.10.2/go.mod h1:DORKrGOeJ735IqsyRFgGKpE5miMDmMhkK/iQAoaVF4g=
+github.com/Urethramancer/cross v0.5.1/go.mod h1:fDdlBbOHyb78KkGBNSM3auQbWBtLt0QzcmKytctpe9c=
+github.com/Urethramancer/daemon v0.3.0/go.mod h1:/T1hacQ495iR95N1l6qtceUY2i6gtcEwcemi6WGJ0n8=
+github.com/Urethramancer/signor v0.12.0 h1:zDvgvwMesVVGW31T5EZeSiqsDsmnmSllI6WfD+fW680=
+github.com/Urethramancer/signor v0.12.0/go.mod h1:A8scGHYye/A3YEL8kasLWcfDHSQSZhQKgWHLaabqJfI=
 github.com/VividCortex/ewma v1.1.1 h1:MnEK4VOv6n0RSY4vtRe3h11qjxL3+t0B8yOL8iMXdcM=
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/aws/aws-sdk-go v1.37.9 h1:sgRbr+heubkgSwkn9fQMF80l9xjXkmhzk9DLdsaYh+c=
@@ -31,6 +33,7 @@ github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHX
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mattn/go-runewidth v0.0.7 h1:Ei8KR0497xHyKJPAv59M1dkC+rOZCMBJ+t3fZ+twI54=
 github.com/mattn/go-runewidth v0.0.7/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
+github.com/mgutz/str v1.2.0/go.mod h1:w1v0ofgLaJdoD0HpQ3fycxKD1WtxpjSo151pK/31q6w=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
