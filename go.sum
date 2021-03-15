@@ -2,8 +2,8 @@ github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20O
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/Urethramancer/cross v0.5.1/go.mod h1:fDdlBbOHyb78KkGBNSM3auQbWBtLt0QzcmKytctpe9c=
 github.com/Urethramancer/daemon v0.3.0/go.mod h1:/T1hacQ495iR95N1l6qtceUY2i6gtcEwcemi6WGJ0n8=
-github.com/Urethramancer/signor v0.12.0 h1:zDvgvwMesVVGW31T5EZeSiqsDsmnmSllI6WfD+fW680=
-github.com/Urethramancer/signor v0.12.0/go.mod h1:A8scGHYye/A3YEL8kasLWcfDHSQSZhQKgWHLaabqJfI=
+github.com/Urethramancer/signor v0.15.0 h1:ihK7Y+qz2MN0s30TOrdFsM/97aJk2VF291+0ovXwp+w=
+github.com/Urethramancer/signor v0.15.0/go.mod h1:A8scGHYye/A3YEL8kasLWcfDHSQSZhQKgWHLaabqJfI=
 github.com/VividCortex/ewma v1.1.1 h1:MnEK4VOv6n0RSY4vtRe3h11qjxL3+t0B8yOL8iMXdcM=
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/aws/aws-sdk-go v1.37.24 h1:UmdPwGITvz//eFxNyuPlkq8KLlu4ZGvowsCQs+uFIp4=
